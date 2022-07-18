@@ -14,20 +14,21 @@ type Computer struct {
 	MsgCh chan *Message //监听消息
 	MsgList []*Message//消息存储下来
 }
-func (c *Computer)SendMessage(ip string,msg string){//只知道目标ip
+func (c *Computer)NewMessage(ip,msg string)*Message{
 	mac:=c.Arp[ip]
-	message:=&Message{
+	return &Message{
 		Head: &MessageHead{
-			FromMac: c.Mac,
-			ToMac:   mac,
-			FromIp:  c.Ip,
-			ToIp:    ip,
+			FromMac:  c.Mac,
+			ToMac: mac,
+			FromIp:   c.Ip,
+			ToIp:     ip,
 			FromPort: c.Port,
 		},
 		Body: msg,
 	}
+}
+func (c *Computer)SendMessage(message *Message){//只知道目标ip
 	c.ExchangeBoard.SendMessage(message)//通过交换机发送消息
-
 }
 func (c *Computer)Wait(){
 	go func() {

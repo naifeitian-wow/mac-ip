@@ -5,22 +5,31 @@ import "fmt"
 //交换机
 type ExchangeBoard struct {
 	MacPort map[string]int//mac与端口映射表
-	PortList map[int]interface{}//所有的端口 端口后可能是电脑，也可能是交换机
-	Port int//交换机也可能有插到别的交换机的端口
+	PortList PortSenderM//所有的端口 端口后可能是电脑，也可能是交换机
+	ExchangeBoardPortM ExchangeBoardPortM//交换机与别的交换机连接的端口，比如A的端口上是B  就是A.ExchangeBoardPortM= [B]1
 }
-func NewExchangeBoard(computerM map[int]*Computer,exchangeBoardM map[int]*ExchangeBoard)*ExchangeBoard{
-	m:=map[int]interface{}{}
-	for k,v:=range computerM{
-		m[k]=v
-	}
-	for k,v:=range exchangeBoardM{
-		m[k]=v
-	}
-	exchangeBoard:=&ExchangeBoard{
+func NewExchangeBoard()*ExchangeBoard{
+	return &ExchangeBoard{
 		MacPort:  map[string]int{},
-		PortList: m,
+		PortList: PortSenderM{},
+		ExchangeBoardPortM:ExchangeBoardPortM{},
 	}
-	return exchangeBoard
+}
+func (e *ExchangeBoard)NewMessage(ip,msg string)*Message{//交换机本身没有自己的初始消息
+	return nil
+}
+func (exchangeBoard *ExchangeBoard)SetSender(portSenderM PortSenderM){
+	for k,v:=range portSenderM{
+		if toExchangeBoard,ok:=v.(*ExchangeBoard);ok{
+			exchangeBoard.ExchangeBoardPortM[toExchangeBoard]=k
+			exchangeBoard.PortList[k]=v
+		}else{
+			exchangeBoard.PortList[k]=v
+		}
+	}
+}
+func (exchangeBoard *ExchangeBoard)GetSender(port int)Sender{
+	return exchangeBoard.PortList[port]
 }
 func (e *ExchangeBoard)SendMessage(message *Message){
 	e.MacPort[message.Head.FromMac]=message.Head.FromPort//更新mac与端口映射表，每次都更新，防止机器换端口
@@ -46,7 +55,7 @@ func (e *ExchangeBoard)commonSendMessage(v interface{},message *Message){
 	case *Computer:
 		v.(*Computer).MsgCh<-message
 	case *ExchangeBoard:
-		message.Head.FromPort=e.Port//交换机的的fromport需要替换
+		message.Head.FromPort=v.(*ExchangeBoard).ExchangeBoardPortM[e]//交换机的的fromport需要替换
 		v.(*ExchangeBoard).SendMessage(message)
 	}
 }

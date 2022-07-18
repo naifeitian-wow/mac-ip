@@ -1,6 +1,12 @@
 package model
 
+type ExchangeBoardPortM map[*ExchangeBoard]int
+type PortSenderM  map[int]Sender
 
+type Sender interface {
+	SendMessage(message *Message)
+	NewMessage(ip,msg string)*Message
+}
 type MessageHead struct {
 	FromMac string
 	ToMac string

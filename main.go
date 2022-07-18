@@ -5,15 +5,15 @@ import (
 	"time"
 )
 var exchangeBoard1,exchangeBoard2,exchangeBoard3 *model.ExchangeBoard
-var computerM1=map[int]*model.Computer{
-	0:{
+var senderM1=model.PortSenderM{
+	0:&model.Computer{
 		Ip:             "192.168.0.1",
 		Mac:            "AAAA",
 		SubnetMask:     "255.255.255.0",
 		DefaultGateway: "192.168.0.254",
 		ExchangeBoard:exchangeBoard1,
 		Port: 0,
-	},1:{
+	},1:&model.Computer{
 		Ip:             "192.168.0.2",
 		Mac:            "BBBB",
 		SubnetMask:     "255.255.255.0",
@@ -22,15 +22,15 @@ var computerM1=map[int]*model.Computer{
 		Port: 1,
 	},
 }
-var computerM2=map[int]*model.Computer{
-	0:{
+var senderM2=model.PortSenderM{
+	0:&model.Computer{
 		Ip:             "192.168.1.1",
 		Mac:            "CCCC",
 		SubnetMask:     "255.255.255.0",
 		DefaultGateway: "192.168.1.254",
 		ExchangeBoard: exchangeBoard2,
 		Port: 0,
-	},1:{
+	},1:&model.Computer{
 		Ip:             "192.168.1.2",
 		Mac:            "DDDD",
 		SubnetMask:     "255.255.255.0",
@@ -38,15 +38,15 @@ var computerM2=map[int]*model.Computer{
 		ExchangeBoard: exchangeBoard2,
 		Port: 1,
 	}}
-var computerM3=map[int]*model.Computer{
-	0:{
+var senderM3=model.PortSenderM{
+	0:&model.Computer{
 		Ip:             "192.168.2.1",
 		Mac:            "EEEE",
 		SubnetMask:     "255.255.255.0",
 		DefaultGateway: "192.168.2.254",
 		ExchangeBoard: exchangeBoard3,
 		Port: 0,
-	},1:{
+	},1:&model.Computer{
 		Ip:             "192.168.2.2",
 		Mac:            "FFFF",
 		SubnetMask:     "255.255.255.0",
@@ -55,26 +55,30 @@ var computerM3=map[int]*model.Computer{
 		Port: 1,
 	}}
 func init(){
+	exchangeBoard1,exchangeBoard2,exchangeBoard3=model.NewExchangeBoard(),model.NewExchangeBoard(),model.NewExchangeBoard()
+	exchangeBoard1.SetSender(senderM1)
+	exchangeBoard2.SetSender(senderM2)
+	exchangeBoard3.SetSender(senderM3)
 
-	exchangeBoard1=model.NewExchangeBoard(computerM1, nil)
-	exchangeBoard2=model.NewExchangeBoard(computerM2,nil)
-	exchangeBoard3=model.NewExchangeBoard(computerM3,nil)
+	exchangeBoard1.SetSender(model.PortSenderM{2:exchangeBoard2})
+	exchangeBoard2.SetSender(model.PortSenderM{2:exchangeBoard1})
 	initComputer(exchangeBoard1,exchangeBoard2,exchangeBoard3)
-	exchangeBoard1.PortList[2]=exchangeBoard2
-	exchangeBoard1.Port=2
-	exchangeBoard2.PortList[2]=exchangeBoard1
-	exchangeBoard2.Port=2
+
 	wait(exchangeBoard1,exchangeBoard2,exchangeBoard3)//监听消息
 }
 func main(){
-	computerM1[0].SendMessage("192.168.0.2","arp")
-	computerM1[0].SendMessage("192.168.1.1","arp")
+	computer,computer2,computer3:=exchangeBoard1.GetSender(0),exchangeBoard1.GetSender(1),exchangeBoard2.GetSender(0)
+	computer.SendMessage(computer.NewMessage("192.168.0.2","arp"))
+	computer.SendMessage(computer.NewMessage("192.168.1.1","arp"))
 	time.Sleep(1*time.Second)
-	computerM1[0].SendMessage("192.168.0.2","hello")
-	computerM1[1].SendMessage("192.168.0.1","hello2")
-	computerM1[1].SendMessage("192.168.0.1","hello3")
-	computerM1[0].SendMessage("192.168.1.1","hello4")
-	computerM2[0].SendMessage("192.168.0.1","hello5")
+	computer.SendMessage(computer.NewMessage("192.168.0.2","hello"))
+	computer2.SendMessage(computer2.NewMessage("192.168.0.1","hello2"))
+	computer.SendMessage(computer.NewMessage("192.168.1.1","hello3"))
+	computer3.SendMessage(computer3.NewMessage("192.168.0.1","hello4"))
+	//computerM1[1].SendMessage("192.168.0.1","hello2")
+	//computerM1[1].SendMessage("192.168.0.1","hello3")
+	//computerM1[0].SendMessage("192.168.1.1","hello4")
+	//computerM2[0].SendMessage("192.168.0.1","hello5")
 	for{
 
 	}
